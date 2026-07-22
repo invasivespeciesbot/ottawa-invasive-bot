@@ -18,9 +18,9 @@ def run_bot():
         obs = data['results'] 
         
         species = obs['taxon']['preferred_common_name']
-        location = obs['place_guess']
-        date = obs['observed_on']
-        link = f"https://www.inaturalist.org/observations/{obs['id']}"
+location = obs['place_guess']
+date = obs['observed_on']
+link = f"https://www.inaturalist.org/observations/{obs['id']}"
 
         # 4. POST TO BLUESKY: Creating the message using your template
         client = Client()
