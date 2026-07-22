@@ -3,7 +3,7 @@ import os
 from atproto import Client
 
 # 1. SETUP
-INAT_URL = "https://inaturalist.org"
+INAT_URL = "https://api.inaturalist.org/v1/observations?place_id=27599&taxon_id=59778,130228,182246,914922&quality_grade=research&per_page=1"
 BSKY_HANDLE = os.environ.get('BLUESKY_HANDLE')
 BSKY_PASSWORD = os.environ.get('BLUESKY_PASSWORD')
 
