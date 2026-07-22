@@ -13,7 +13,7 @@ def run_bot():
 
     if data.get('results') and len(data['results']) > 0:
         # FIX 1: Extract the first observation from the results list
-        obs = data['results']
+        obs = data['results'][0]
         
         # Safely extract species name
         taxon_info = obs.get('taxon', {})
