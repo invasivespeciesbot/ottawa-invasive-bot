@@ -12,17 +12,19 @@ def run_bot():
     response = requests.get(INAT_URL)
     data = response.json()
 
-    # 3. FILTER & EXTRACT: Using only "research grade" for accuracy [1]
-    if data['results'] and len(data['results']) > 0:
-        # Pick the first result from the list
-        obs = data['results']
+    # 3. FILTER & EXTRACT: Using only "research grade" for accuracy
+    if data.get('results') and len(data['results']) > 0:
+        # Pick the first result from the list using index [0]
+        obs = data['results'][0]
         
-        species = obs['taxon']['preferred_common_name']
-        location = obs['place_guess']
-        date = obs['observed_on']
-        link = f"https://www.inaturalist.org/observations/{obs['id']}"
+        # Safely pull fields using .get() to prevent crashes if a name or guess is missing
+        taxon_info = obs.get('taxon', {})
+        species = taxon_info.get('preferred_common_name', taxon_info.get('name', 'Unknown Species'))
+        location = obs.get('place_guess', 'Ottawa Region')
+        date = obs.get('observed_on', 'recently')
+        link = f"https://www.inaturalist.org/observations/{obs.get('id')}"
 
-        # 4. POST TO BLUESKY: Using the required safety template [2]
+        # 4. POST TO BLUESKY: Using the required safety template
         client = Client()
         client.login(BSKY_HANDLE, BSKY_PASSWORD)
         
