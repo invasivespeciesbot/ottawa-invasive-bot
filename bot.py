@@ -8,19 +8,21 @@ BSKY_HANDLE = os.environ.get('BLUESKY_HANDLE')
 BSKY_PASSWORD = os.environ.get('BLUESKY_PASSWORD')
 
 def run_bot():
-    # 2. REQUEST DATA: This "hits" the iNaturalist API for the latest sightings [1]
+    # 2. REQUEST DATA: This "hits" the iNaturalist API for the latest sightings
     response = requests.get(INAT_URL)
     data = response.json()
 
-    # 3. FILTER & EXTRACT: We only take 'research grade' for accuracy [2, 3]
+    # 3. FILTER & EXTRACT: Select the first result  from the list
     if data['results']:
-        obs = data['results']
+        # This line was fixed to select the first item in the list:
+        obs = data['results'] 
+        
         species = obs['taxon']['preferred_common_name']
         location = obs['place_guess']
         date = obs['observed_on']
         link = f"https://www.inaturalist.org/observations/{obs['id']}"
 
-        # 4. POST TO BLUESKY: Creating the message using your template [1]
+        # 4. POST TO BLUESKY: Creating the message using your template
         client = Client()
         client.login(BSKY_HANDLE, BSKY_PASSWORD)
         
@@ -32,6 +34,8 @@ def run_bot():
         
         client.send_post(message)
         print("Post sent successfully!")
+    else:
+        print("No new observations found.")
 
 if __name__ == "__main__":
     run_bot()
