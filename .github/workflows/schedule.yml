@@ -1,0 +1,29 @@
+name: Run Ottawa Invasive Bot
+
+on:
+  schedule:
+    # This runs the bot every Monday at 12:00 PM UTC (Weekly)
+    - cron: '0 12 * * 1'
+  workflow_dispatch: # This allows you to run the bot manually for testing
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: pip install requests atproto
+
+      - name: Run Bot
+        env:
+          BLUESKY_HANDLE: ${{ secrets.BLUESKY_HANDLE }}
+          BLUESKY_PASSWORD: ${{ secrets.BLUESKY_PASSWORD }}
+        run: python bot.py
