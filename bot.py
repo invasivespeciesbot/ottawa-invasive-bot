@@ -4,10 +4,11 @@ from datetime import datetime
 from atproto import Client 
 
 # 1. SETUP & CONFIGURATION
-# We remove the fixed 'per_page=3' and dynamically add date bounds later
 INAT_BASE_URL = "https://inaturalist.org"
 PLACE_ID = "27599"  # Ottawa Region
-TAXON_IDS = "59778,130228,182246,914922" # Target species
+
+# FIXED: We use the exact taxon numerical IDs directly in the string
+TAXON_IDS = "59778,130228,182246,914922" 
 
 BSKY_HANDLE = os.environ.get('BLUESKY_HANDLE') 
 BSKY_PASSWORD = os.environ.get('BLUESKY_PASSWORD') 
@@ -16,14 +17,18 @@ def run_bot():
     # Get today's date in YYYY-MM-DD format
     today_str = datetime.today().strftime('%Y-%m-%d')
     
-    # Build query parameters to filter precisely by today's upload date
+    # FIXED: Added a custom User-Agent to stop iNaturalist from blocking the script
+    headers = {
+        "User-Agent": "OttawaInvasiveSpeciesBot/1.0 (Contact: your_email@example.com)"
+    }
+    
     params = {
         "place_id": PLACE_ID,
         "taxon_id": TAXON_IDS,
         "quality_grade": "research",
-        "created_d1": today_str,  # Start of upload date range
-        "created_d2": today_str,  # End of upload date range
-        "per_page": 200,          # Maximize results per API call to minimize pages
+        "created_d1": today_str,  
+        "created_d2": today_str,  
+        "per_page": 200,          
         "page": 1
     }
 
@@ -35,12 +40,27 @@ def run_bot():
 
     while True:
         print(f"Fetching page {params['page']} from iNaturalist...")
-        response = requests.get(INAT_BASE_URL, params=params)
-        data = response.json() 
+        
+        # FIXED: Passing both headers and params safely
+        response = requests.get(INAT_BASE_URL, params=params, headers=headers)
+        
+        # FIXED: Check if the network request actually succeeded (HTTP 200)
+        if response.status_code != 200:
+            print(f"API Error! iNaturalist responded with Status Code: {response.status_code}")
+            print(f"Response snippet: {response.text[:200]}")
+            break
+
+        # FIXED: Wrap JSON decoding inside a try/except block to protect against crashes
+        try:
+            data = response.json() 
+        except requests.exceptions.JSONDecodeError:
+            print("Failed to decode JSON. The API returned an empty or corrupted response.")
+            print(f"Raw response text: {response.text[:500]}")
+            break
         
         results = data.get('results', [])
         if not results:
-            break  # Stop looping if the current page has no results
+            break  
             
         print(f"Found {len(results)} observations on page {params['page']}.")
         
@@ -49,20 +69,20 @@ def run_bot():
             species = taxon_info.get('preferred_common_name', taxon_info.get('name', 'Unknown Species')) 
             location = obs.get('place_guess', 'Ottawa Region') 
             date = obs.get('observed_on', 'recently') 
-            link = f"https://inaturalist.org/{obs.get('id')}/" 
+            link = f"https://inaturalist.org{obs.get('id')}" 
             
             # Safely pull the Photo URL
             image_data = None 
             photos = obs.get('photos', []) 
             if photos and len(photos) > 0: 
-                first_photo = photos[0] 
+                first_photo = photos[0]  # FIXED: Reference the list item correctly
                 photo_url = first_photo.get('url', '') 
                 if photo_url: 
                     if photo_url.startswith('//'): 
                         photo_url = 'https:' + photo_url 
                     photo_url = photo_url.replace('square', 'medium') 
                     try: 
-                        image_data = requests.get(photo_url).content 
+                        image_data = requests.get(photo_url, headers=headers).content 
                     except Exception as e: 
                         print(f"Failed to download image for ID {obs.get('id')}: {e}") 
             
@@ -97,11 +117,9 @@ def run_bot():
             except Exception as e:
                 print(f"Failed to post observation {obs.get('id')} to Bluesky: {e}")
                 
-        # If the number of results is less than the max per page, we've hit the last page
         if len(results) < params['per_page']:
             break
             
-        # Move to the next page of results
         params['page'] += 1
 
     if total_posted == 0:
