@@ -2,14 +2,14 @@ name: Run Invasive Species Bot
 
 on:
   schedule:
-    - cron: '0 12 * * *' # Runs automatically once every day at 12:00 PM UTC
-  workflow_dispatch:      # Allows you to click "Run workflow" manually
+    - cron: '0 12 * * *'
+  workflow_dispatch:      # Allows you to click the manual "Run workflow" button
 
 jobs:
   run-bot:
     runs-on: ubuntu-latest
     permissions:
-      contents: write    # CRITICAL: Gives GitHub permission to save posted_ids.txt
+      contents: write    
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -17,7 +17,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-node-version: '3.9'
+          python-version: '3.9'
 
       - name: Install Dependencies
         run: |
@@ -28,13 +28,12 @@ jobs:
         env:
           BLUESKY_HANDLE: ${{ secrets.BLUESKY_HANDLE }}
           BLUESKY_PASSWORD: ${{ secrets.BLUESKY_PASSWORD }}
-        run: python bot.py
+        run: python bot.py # Makes sure it runs your updated bot file!
 
       - name: Commit and Save Posting History
         run: |
           git config --global user.name "GitHub Actions Bot"
           git config --global user.email "actions@github.com"
-          # Check if there are changes in posted_ids.txt to avoid empty commit errors
           if [[ -n "$(git status --porcelain posted_ids.txt)" ]]; then
             git add posted_ids.txt
             git commit -m "Automated update: log newly posted iNaturalist IDs"
