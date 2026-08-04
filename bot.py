@@ -3,7 +3,7 @@ import os
 from atproto import Client 
 
 # 1. SETUP & CONFIGURATION
-INAT_BASE_URL = "https://inaturalist.org"
+INAT_BASE_URL = "https://api.inaturalist.org/v1/observations?place_id=27599&taxon_id=59778,130228,182246,914922&quality_grade=research&per_page=10"
 PLACE_ID = "27599"  # Ottawa Region
 TAXON_IDS = "59778,130228,182246,914922" 
 
